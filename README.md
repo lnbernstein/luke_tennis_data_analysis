@@ -1,5 +1,7 @@
 # luke_tennis_data_analysis
-Tennis Data Analysis with Jeff's data
+All Data is copyright Jeff Sackmann under Creative Commons Attribution-NonCommerical-ShareAlike 4.0 international License
+
+https://github.com/JeffSackmann/tennis_atp
 
 
 Scenario 1 finds the ten players with the most wins and losses since 1985
