@@ -1,11 +1,39 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn import tree
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 # Alright, we want to compare the number of break points won and break points saved for the players
 # with the most wins each year against the players with the most losses each year
 
 plt.style.use('seaborn-whitegrid')
+
+
+def filtering():
+    data = pd.read_csv('tennis_atp_1985>/atp_matches_2019.csv')
+    winners = data.filter(
+        ['w_ace', 'w_df', 'w_svpt', 'w_1stIn', 'w_1stWon', 'w_2ndWon', 'w_svGms', 'w_bpSaved',
+         'w_bpFaced'])
+    winners['won'] = 1
+    print(winners.columns)
+    print(winners.dtypes)
+    winners = winners.dropna()
+    print(winners.isnull().any())
+    Xtrain, Xtest, ytrain, ytest = train_test_split(winners.iloc[:, : 7], winners.iloc[:, -1], random_state=0)
+    clf = tree.DecisionTreeClassifier()
+    clf = clf.fit(Xtrain, ytrain)
+    res_pred = clf.predict(Xtest)
+    score = accuracy_score(ytest, res_pred)
+    print(score)
+
+    # winners['serving_bp_won'] = winners['w_bpSaved'] / winners['w_bpFaced']
+    # winners['serving_bp_lost'] = 1 - winners['serving_bp_won']
+    # winners['returning_bp_won'] = winners['l_bpSaved'] / winners['l_bpFaced']
+    # winners['returning_bp_lost'] = 1 - winners['returning_bp_won']
+    # winners = winners.drop(columns=['winner_name', 'l_bpSaved', 'l_bpFaced', 'w_bpSaved', 'w_bpFaced'])
+    # winners = winners.dropna()
 
 
 def find_winners(path):
@@ -52,6 +80,8 @@ def find_winners(path):
     # print(pd.isnull(winners).any())
     print(winners.describe())
 
+    return winners
+
 
 def find_losers(path):
     data = pd.read_csv(path)
@@ -87,12 +117,15 @@ def find_losers(path):
     # print(pd.isnull(losers).any())
     print(losers.describe())
 
+    return losers
+
 
 def main():
-    print('Winners')
-    find_winners('tennis_atp_1985>/atp_matches_2019.csv')
-    print('Losers')
-    find_losers('tennis_atp_1985>/atp_matches_2019.csv')
+    filtering()
+    # print('Winners')
+    # find_winners('tennis_atp_1985>/atp_matches_2019.csv')
+    # print('Losers')
+    # find_losers('tennis_atp_1985>/atp_matches_2019.csv')
     # plt.scatter(clean['w_bpSaved'], clean['w_bpFaced'], c='r')
     # plt.show()
 
