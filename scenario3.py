@@ -86,7 +86,7 @@ def log_regression(clean):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Win rate')
+    plt.title('Receiver operating characteristic')
     plt.legend(loc="lower right")
     plt.savefig('Log_ROC')
     plt.show()
