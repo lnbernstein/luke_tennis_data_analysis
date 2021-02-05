@@ -1,3 +1,4 @@
+import os
 import seaborn as sns
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,12 +14,21 @@ import numpy as np
     characteristic. There is now a separate row for winners and losers. """
 
 
-def data_clean(path):
-    data = pd.read_csv(path)
-    winners = data.filter(['tourney_date', 'winner_name', 'winner_hand', 'winner_ht', 'winner_age', 'w_ace', 'w_df',
+def get_all_data():
+    path = 'tennis_atp_1985>'
+    all_data = pd.DataFrame()
+    for file in os.listdir('tennis_atp_1985>'):
+        file_path = os.path.join(path, file)
+        all_data = all_data.append(pd.read_csv(file_path))
+
+    return all_data
+
+
+def data_clean(data):
+    winners = data.filter(['winner_name', 'winner_hand', 'winner_ht', 'winner_age', 'w_ace', 'w_df',
                            'w_svpt', 'w_1stIn', 'w_1stWon', 'w_2ndWon', 'w_SvGms', 'w_bpSaved', 'w_bpFaced'])
     winners['won'] = 1
-    losers = data.filter(['tourney_date', 'loser_name', 'loser_hand', 'loser_ht', 'loser_age', 'l_ace', 'l_df',
+    losers = data.filter(['loser_name', 'loser_hand', 'loser_ht', 'loser_age', 'l_ace', 'l_df',
                           'l_svpt', 'l_1stIn', 'l_1stWon', 'l_2ndWon', 'l_SvGms', 'l_bpSaved', 'l_bpFaced'])
     losers['won'] = 0
 
@@ -35,9 +45,9 @@ def data_clean(path):
     # print(winners.head)
     # print(losers.head)
     clean = pd.concat([winners, losers], axis=0)
-    clean['tourney_date'] = pd.to_datetime(winners['tourney_date'], format='%Y%m%d')
-    clean.set_index('tourney_date', inplace=True)
-    clean.sort_index(inplace=True)
+    # clean['tourney_date'] = pd.to_datetime(winners['tourney_date'], format='%Y%m%d')
+    # clean.set_index('tourney_date', inplace=True)
+    # clean.sort_index(inplace=True)
     # print(clean.columns)
     clean['serving_bp_won'] = clean['bpSaved'] / clean['bpFaced']
     clean['serving_bp_lost'] = 1 - clean['serving_bp_won']
@@ -51,17 +61,23 @@ def data_clean(path):
     return clean
 
 
+"""Uses Select K best and Extra Trees to find best features for ml models"""
+
+
 def select_features(clean):
     X = clean.loc[:, clean.columns != 'won']
     X = X.select_dtypes(exclude=['object'])
     y = np.array(clean['won'])
     best_features = SelectKBest(score_func=chi2, k=10)
-    fit = best_features.fit(X,y)
+    fit = best_features.fit(X, y)
     dfscores = pd.DataFrame(fit.scores_)
     dfcolumns = pd.DataFrame(X.columns)
     featureScores = pd.concat([dfcolumns, dfscores], axis=1)
     featureScores.columns = ['Specs', 'Score']
     print(featureScores.nlargest(10, 'Score'))
+    features = (featureScores.nlargest(10, 'Score'))
+    features.drop(['Score'], axis=1, inplace=True)
+    print(features)
 
     model = ExtraTreesClassifier()
     model.fit(X, y)
@@ -71,16 +87,13 @@ def select_features(clean):
     feat_importances.nlargest(10).plot(kind='barh')
     plt.show()
 
-    corrmat = clean.corr()
-    top_corr_features = corrmat.index
-    plt.figure(figsize=(20, 20))
-    # plot heat map
-    g = sns.heatmap(clean[top_corr_features].corr(), annot=True, cmap="RdYlGn")
-    plt.show()
+    features = features[:5]
+    features = np.array(features['Specs'])
+    return features
 
 
-def log_regression(clean):
-    X = clean[['bpFaced', '1stWon', 'ace', 'bpSaved', '2ndWon', '1stIn', 'svGms', 'hand_R']].to_numpy()
+def log_regression(clean, met_features):
+    X = clean[met_features]
     # print(X)
     y = np.array(clean['won'])
     # print(X.shape)
@@ -100,8 +113,8 @@ def log_regression(clean):
     print(classification_report(y_test, y_predicted))
 
 
-def decision_tree(clean):
-    X = clean[['bpFaced', '1stWon', 'ace', 'bpSaved', '2ndWon', '1stIn', 'svGms', 'hand_R']].to_numpy()
+def decision_tree(clean, met_features):
+    X = clean[met_features]
     y = np.array(clean['won'])
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8, random_state=42)
@@ -119,8 +132,8 @@ def decision_tree(clean):
     print(classification_report(y_test, y_predicted))
 
 
-def random_forest(clean):
-    X = clean[['bpFaced', '1stWon', 'ace', 'bpSaved', '2ndWon', '1stIn', 'svGms', 'hand_R']].to_numpy()
+def random_forest(clean, met_features):
+    X = clean[met_features]
     y = np.array(clean['won'])
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8, random_state=42)
@@ -165,8 +178,9 @@ def plot_cm(y_true, y_pred):
 
 
 if __name__ == '__main__':
-    data_2019 = data_clean('tennis_atp_1985>/atp_matches_2019.csv')
-    # select_features(data_2019)
-    log_regression(data_2019)
-    decision_tree(data_2019)
-    random_forest(data_2019)
+    all_data = data_clean(get_all_data())
+    data_2019 = data_clean(pd.read_csv('tennis_atp_1985>/atp_matches_2019.csv'))
+    features = select_features(data_2019)
+    log_regression(all_data, features)
+    decision_tree(all_data, features)
+    random_forest(all_data, features)

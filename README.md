@@ -9,8 +9,8 @@ Scenario 3: Attempts to decipher which player won the match
     <li> select_features uses Scikit Learn's Select K Best and Extra Trees Classifer to determine which features are most effective for use in models</li>
     <li>Features selected were 'bpFaced', '1stWon', 'ace', 'bpSaved', '2ndWon', '1stIn', 'svGms', 'hand_R' which are the top five from K Best and two best (unique) from Extra Trees</li>
     <li>Three models implemented: Logistic Regression, Decision Tree, and Random Forest</li>
-    <li>Best Precision is found in logistic Regression with .76 on average</li>
-    <li>Best Area under ROC however is found in Decision Tree with .84 on average</li>
+    <li>Best Precision is found in logistic Regression with .79 on average</li>
+    <li>Best Area under ROC however is found in Decision Tree with .86 on average</li>
 </ul>
 
 Scenario 1 finds the ten players with the most wins and losses since 1985
