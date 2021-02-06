@@ -95,6 +95,7 @@ def select_features(clean):
     features = features[:5]
     features = np.array(features['Specs'])
     print(features)
+    features = np.append(features, ['1stIn', 'svGms', 'hand_R'])
 
     return features
 
@@ -162,6 +163,7 @@ def random_forest(clean, met_features):
         :param met_features: array returned from select_features
         :type met_features: np array
         """
+
     X = clean[met_features]
     y = np.array(clean['won'])
 
