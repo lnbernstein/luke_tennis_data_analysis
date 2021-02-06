@@ -20,4 +20,4 @@ next steps are to find ace percentages, and see if I can perdict which player wi
 
 MIT License
 
-Copyright (c) 2021 Luke Bernstein
+Copyright (c) 2021 Luke Bernstein 
