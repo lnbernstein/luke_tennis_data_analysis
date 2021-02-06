@@ -15,6 +15,10 @@ import numpy as np
 
 
 def get_all_data():
+    """
+    :return: concated df of all csv's since 1985
+    :rtype: dataFrame
+    """
     path = 'tennis_atp_1985>'
     all_data = pd.DataFrame()
     for file in os.listdir('tennis_atp_1985>'):
@@ -25,9 +29,18 @@ def get_all_data():
 
 
 def data_clean(data):
+    """
+    Filters all unnecessary features from data set containg matches since 1985
+    :param data: data set compiled in get_all_data
+    :type data: dataFrame
+    :return clean:
+    :rtype clean: dataFrame
+    """
+    # select all features of winning participants
     winners = data.filter(['winner_name', 'winner_hand', 'winner_ht', 'winner_age', 'w_ace', 'w_df',
                            'w_svpt', 'w_1stIn', 'w_1stWon', 'w_2ndWon', 'w_SvGms', 'w_bpSaved', 'w_bpFaced'])
     winners['won'] = 1
+    # select all features of losing participants
     losers = data.filter(['loser_name', 'loser_hand', 'loser_ht', 'loser_age', 'l_ace', 'l_df',
                           'l_svpt', 'l_1stIn', 'l_1stWon', 'l_2ndWon', 'l_SvGms', 'l_bpSaved', 'l_bpFaced'])
     losers['won'] = 0
@@ -41,23 +54,16 @@ def data_clean(data):
                             'ace', 'l_df': 'df', 'l_svpt': 'svpt', 'l_1stIn': '1stIn', 'l_1stWon': '1stWon',
                            'l_2ndWon': '2ndWon', 'l_SvGms': 'svGms', 'l_bpSaved': 'bpSaved', 'l_bpFaced': 'bpFaced'},
                   inplace=True)
-    # print(data.columns)
-    # print(winners.head)
-    # print(losers.head)
     clean = pd.concat([winners, losers], axis=0)
-    # clean['tourney_date'] = pd.to_datetime(winners['tourney_date'], format='%Y%m%d')
-    # clean.set_index('tourney_date', inplace=True)
-    # clean.sort_index(inplace=True)
-    # print(clean.columns)
     clean['serving_bp_won'] = clean['bpSaved'] / clean['bpFaced']
     clean['serving_bp_lost'] = 1 - clean['serving_bp_won']
     clean['returning_bp_won'] = clean['bpSaved'] / clean['bpFaced']
     clean['returning_bp_lost'] = 1 - clean['returning_bp_won']
+    # Null values are safely dropped and this indicates matches where there was a 0 for any of these categores
     clean.dropna(inplace=True)
+    print(clean.isnull().values.any())
+    # one-hot encoded dummy variable for hand of the participant
     clean = pd.get_dummies(clean, prefix='hand', columns=['hand'])
-    # print(clean.head)
-    # print(pd.isnull(clean).any())
-
     return clean
 
 
@@ -65,6 +71,13 @@ def data_clean(data):
 
 
 def select_features(clean):
+    """
+    Uses SelectKBest and ChiSquared to determine most useful features
+    :param clean: filtered df from data_clean, only 2019 used as these features are most applicable for prediction
+    :type clean: dataFrame
+    :return features: five most useful features for predicting the outcome
+    :rtype: np array
+    """
     X = clean.loc[:, clean.columns != 'won']
     X = X.select_dtypes(exclude=['object'])
     y = np.array(clean['won'])
@@ -72,31 +85,31 @@ def select_features(clean):
     fit = best_features.fit(X, y)
     dfscores = pd.DataFrame(fit.scores_)
     dfcolumns = pd.DataFrame(X.columns)
+
     featureScores = pd.concat([dfcolumns, dfscores], axis=1)
     featureScores.columns = ['Specs', 'Score']
-    print(featureScores.nlargest(10, 'Score'))
+
     features = (featureScores.nlargest(10, 'Score'))
     features.drop(['Score'], axis=1, inplace=True)
-    print(features)
-
-    model = ExtraTreesClassifier()
-    model.fit(X, y)
-    print(model.feature_importances_)  # use inbuilt class feature_importances of tree based classifiers
-    # plot graph of feature importances for better visualization
-    feat_importances = pd.Series(model.feature_importances_, index=X.columns)
-    feat_importances.nlargest(10).plot(kind='barh')
-    plt.show()
 
     features = features[:5]
     features = np.array(features['Specs'])
+    print(features)
+
     return features
 
 
 def log_regression(clean, met_features):
+    """
+    Performs Logistic Regression using SciKit Learn
+    Produces results using Classification Report Class from SciKit Learn
+    :param clean: df from data_clean
+    :type clean: dataFrame
+    :param met_features: array returned from select_features
+    :type met_features: np array
+    """
     X = clean[met_features]
-    # print(X)
     y = np.array(clean['won'])
-    # print(X.shape)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=.8, random_state=42)
     model = LogisticRegression()
@@ -114,6 +127,14 @@ def log_regression(clean, met_features):
 
 
 def decision_tree(clean, met_features):
+    """
+        Performs Decision Tree Classification using SciKit Learn
+        Produces results using Classification Report Class from SciKit Learn
+        :param clean: df from data_clean
+        :type clean: dataFrame
+        :param met_features: array returned from select_features
+        :type met_features: np array
+        """
     X = clean[met_features]
     y = np.array(clean['won'])
 
@@ -133,6 +154,14 @@ def decision_tree(clean, met_features):
 
 
 def random_forest(clean, met_features):
+    """
+        Performs Random Forest Classification using SciKit Learn
+        Produces results using Classification Report Class from SciKit Learn
+        :param clean: df from data_clean
+        :type clean: dataFrame
+        :param met_features: array returned from select_features
+        :type met_features: np array
+        """
     X = clean[met_features]
     y = np.array(clean['won'])
 
@@ -151,11 +180,18 @@ def random_forest(clean, met_features):
     print(classification_report(y_test, y_predicted))
 
 
-"""Plots area under the Receiver Operating Characteristic Curve 
-    True Positive Rate / False Positive Rate"""
-
-
 def plot_roc(fpr, tpr, auc):
+    """
+    Plots area under the Receiver Operating Characteristic Curve
+    True Positive Rate / False Positive Rate
+    calculated using roc_curve function from SciKit
+    :param fpr: False Positivity Rate
+    :type fpr: float
+    :param tpr: True Positivity Rate
+    :type tpr: float
+    :param auc: Area Under the Curve
+    :type auc: float
+    """
     plt.plot(fpr, tpr, color='orange', label='ROC (area = %0.2f)' % auc)
     plt.plot([0, 1], [0, 1], color='darkblue', linestyle='--')
     plt.xlabel('False Positive Rate')
@@ -165,12 +201,17 @@ def plot_roc(fpr, tpr, auc):
     plt.show()
 
 
-"""Plot a confusion matrix for each ML model
-    True Positive, False Positive
-    False Negative, True Negative"""
-
-
 def plot_cm(y_true, y_pred):
+    """
+    Plot a confusion matrix for each ML model
+    Calculated using SciKit and heatmap generated by Seaborn
+    True Positive, False Positive
+    False Negative, True Negative
+    :param y_true:
+    :type y_true:
+    :param y_pred:
+    :type y_pred:
+    """
     cf = confusion_matrix(y_true, y_pred)
     print(cf)
     sns.heatmap(cf / np.sum(cf), annot=True, fmt='.2%', cmap='rocket')
