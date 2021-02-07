@@ -9,7 +9,7 @@ Scenario 3: Attempts to decipher which player won the match
     <li> select_features uses Scikit Learn's Select K Best to determine which features are most effective for use in models</li>
     <li>Features selected were 'bpFaced', '1stWon', 'ace', 'bpSaved', '2ndWon' which are the top five from K Best & '1stIn', 'svGms', 'hand_R' from practical testing.</li>
     <li>Three models implemented: Logistic Regression, Decision Tree, and Random Forest</li>
-    <li>Best Precision is found in logistic Regression with .79 42 random_state</li>
+    <li>Best Precision is found in logistic Regression with .79 with 42 random_state</li>
     <li>Best Area under ROC however is found in Decision Tree with .87 with 42 random_state</li>
 </ul>
 
