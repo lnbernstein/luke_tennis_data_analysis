@@ -1,17 +1,6 @@
 import pandas as pd
 import os
 
-# Scenario 1
-#
-# 1. Find the most head to head matches
-# a. Let’s just look at the Top 20
-# 2. Wins and Losses by
-# a. In Total
-#
-# By Final Round vs All Other Round
-#
-# b. Surface
-# c. Grand Slam vs Other
 
 """cleans an individual csv file into a data frame containing only tournament level of A or G, tourney_date as index
 winner and loser name and rank and round of match for only matches between the top 20 players in  world at that time"""
@@ -24,8 +13,6 @@ def clean_csv(path):
 
     scenario1 = data_2020.filter(
         ['tourney_level', 'tourney_date', 'winner_name', 'loser_name', 'round', 'winner_rank', 'loser_rank'])
-    # print(scenario1.head)
-    # print(scenario1.shape)
 
     scenario1['tourney_date'] = pd.to_datetime(scenario1['tourney_date'], format='%Y%m%d')
     scenario1 = scenario1.set_index('tourney_date')
@@ -38,11 +25,6 @@ def clean_csv(path):
     mask = mask1 | mask2
 
     scenario1 = scenario1[mask]
-
-    # pd.set_option('display.max_columns', None)
-    # print(scenario1['round'])
-    # print(scenario1.shape)
-    # print(scenario1.head)
 
     return scenario1
 
@@ -73,13 +55,7 @@ def most_common_losers(all_data):
     print(all_data['loser_name'].value_counts()[:n].index.tolist())
 
 
-def main():
+if __name__ == "__main__":
     all_data = get_all_data()
     most_common_winners(all_data)
     most_common_losers(all_data)
-    # print(all_data.shape)
-    # print(all_data.head)
-
-
-if __name__ == "__main__":
-    main()

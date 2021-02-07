@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, roc_curve, roc_auc_score, confusion_matrix
 from sklearn.feature_selection import SelectKBest, chi2
 import numpy as np
@@ -83,13 +83,13 @@ def select_features(clean):
     y = np.array(clean['won'])
     best_features = SelectKBest(score_func=chi2, k=10)
     fit = best_features.fit(X, y)
-    dfscores = pd.DataFrame(fit.scores_)
-    dfcolumns = pd.DataFrame(X.columns)
+    df_scores = pd.DataFrame(fit.scores_)
+    df_columns = pd.DataFrame(X.columns)
 
-    featureScores = pd.concat([dfcolumns, dfscores], axis=1)
-    featureScores.columns = ['Specs', 'Score']
+    feature_scores = pd.concat([df_columns, df_scores], axis=1)
+    feature_scores.columns = ['Specs', 'Score']
 
-    features = (featureScores.nlargest(10, 'Score'))
+    features = (feature_scores.nlargest(10, 'Score'))
     features.drop(['Score'], axis=1, inplace=True)
 
     features = features[:5]
@@ -223,7 +223,7 @@ def plot_cm(y_true, y_pred):
 if __name__ == '__main__':
     all_data = data_clean(get_all_data())
     data_2019 = data_clean(pd.read_csv('tennis_atp_1985>/atp_matches_2019.csv'))
-    features = select_features(data_2019)
-    log_regression(all_data, features)
-    decision_tree(all_data, features)
-    random_forest(all_data, features)
+    main_features = select_features(data_2019)
+    log_regression(all_data, main_features)
+    decision_tree(all_data, main_features)
+    random_forest(all_data, main_features)
